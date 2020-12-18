@@ -1,5 +1,6 @@
 use std::net::{TcpListener, TcpStream};
 use ftp_utils::{ftp_read, ftp_write};
+use std::thread;
 
 fn server(ip: &str) {
     let listener = TcpListener::bind(ip).unwrap();
@@ -11,14 +12,16 @@ fn server(ip: &str) {
             Ok(mut stream) => {
                 println!("\t[INFO] {} Connected", stream.peer_addr().unwrap());
 
-                match ftp_write::stream_file(&mut stream, "test.txt") {
-                    Ok(()) => {
-                        println!("\t[INFO] {} Downloaded File", stream.peer_addr().unwrap());
-                    },
-                    Err(_) => {
-                        println!("\t[ERROR] {} Cannot Download File", stream.peer_addr().unwrap());
-                    }
-                };
+                thread::spawn(move || {
+                    match ftp_write::stream_file(&mut stream, "test.txt") {
+                        Ok(()) => {
+                            println!("\t[INFO] {} Downloaded File", stream.peer_addr().unwrap());
+                        },
+                        Err(_) => {
+                            println!("\t[ERROR] {} Cannot Download File", stream.peer_addr().unwrap());
+                        }
+                    };
+                });
             },
             Err(_) => {
                 println!("[ERROR] Cannot Connect");
